@@ -8,6 +8,7 @@
     "build:cf": "cross-env CF_PAGES=1 remix build",
     "build:nf": "cross-env NETLIFY=1 remix build",
     "build": "node_modules/.bin/remix build",
+    "vercel-build": "node_modules/.bin/remix build",
     "dev:wrangler": "cross-env CF_PAGES=1 wrangler pages dev ./public",
     "dev": "node_modules/.bin/remix dev",
     "dev:cf": "cross-env CF_PAGES=1 remix dev --manual -c \"yarn run dev:wrangler\"",
