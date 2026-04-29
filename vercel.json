@@ -1,0 +1,7 @@
+{
+  "buildCommand": "remix build",
+  "devCommand": "remix dev",
+  "installCommand": "yarn install",
+  "framework": "remix",
+  "outputDirectory": "build"
+}
