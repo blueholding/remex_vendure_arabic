@@ -3,5 +3,13 @@
   "devCommand": "remix dev",
   "installCommand": "yarn install",
   "framework": "remix",
-  "outputDirectory": "build"
+  "outputDirectory": "build",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
 }
