@@ -1,8 +1,6 @@
 {
-  "buildCommand": "remix build",
-  "devCommand": "remix dev",
+  "buildCommand": "yarn build",
   "installCommand": "yarn install",
-  "framework": "remix",
   "outputDirectory": "build",
   "env": {
     "NODE_ENV": "production"
