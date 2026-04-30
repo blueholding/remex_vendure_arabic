@@ -10,7 +10,7 @@
     font-family: 'Cairo', sans-serif;
     direction: rtl;
   }
-}
+
   button:disabled {
     cursor: not-allowed;
   }
