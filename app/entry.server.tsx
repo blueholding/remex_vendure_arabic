@@ -108,9 +108,11 @@ export default async function handleRequest(
     i18next.getLocale(request),
   );
 
+  const backend = await getPlatformBackend();
+
   await instance
     .use(initReactI18next)
-    .use(await getPlatformBackend())
+    .use(backend)
     .init({
       ...i18n,
       lng,
