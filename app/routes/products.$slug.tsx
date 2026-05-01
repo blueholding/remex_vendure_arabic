@@ -8,6 +8,7 @@ import {
   useLoaderData,
   useOutletContext,
   MetaFunction,
+  useNavigate,
 } from '@remix-run/react';
 import { CheckIcon, HeartIcon, PhotoIcon } from '@heroicons/react/24/solid';
 import { Breadcrumbs } from '~/components/Breadcrumbs';
@@ -63,6 +64,21 @@ export default function ProductSlug() {
   const { activeOrder } = activeOrderFetcher.data ?? {};
   const addItemToOrderError = getAddItemToOrderError(error);
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const handleBuyNow = () => {
+    if (selectedVariant) {
+      const formData = new FormData();
+      formData.append('action', 'addItemToOrder');
+      formData.append('variantId', selectedVariant.id);
+      formData.append('quantity', '1');
+      activeOrderFetcher.submit(formData, {
+        method: 'post',
+        action: '/api/active-order',
+      });
+      setTimeout(() => navigate('/checkout'), 500);
+    }
+  };
 
   if (!product) {
     return <div>{t('product.notFound')}</div>;
@@ -228,6 +244,16 @@ export default function ProductSlug() {
                     ) : (
                       t('product.addToCart')
                     )}
+                  </button>
+
+                  {/* زر اشتري الآن */}
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    disabled={activeOrderFetcher.state !== 'idle' || !selectedVariant}
+                    className="max-w-xs flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 transition-colors border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:w-full"
+                  >
+                    {t('product.buyNow')}
                   </button>
 
                   <button
