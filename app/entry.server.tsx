@@ -5,7 +5,9 @@ import isbot from 'isbot';
 import ReactDOM from 'react-dom/server';
 
 import { createInstance } from 'i18next';
-import { getI18NextServer, getPlatformBackend } from './i18next.server';
+import { getI18NextServer } from './i18next.server';
+import resourcesToBackend from 'i18next-resources-to-backend';
+import { findLanguageJSON } from '~/languages.server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import i18n from './i18n';
 import {
