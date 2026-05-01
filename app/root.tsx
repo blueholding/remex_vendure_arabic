@@ -73,17 +73,17 @@ export type RootLoaderData = {
 };
 
 export async function loader({ request, params, context }: DataFunctionArgs) {
-  const collections = await getCollections(request, { take: 20 });
+  const collections = await getCollections(request, { take: 20 }).catch(() => []) ?? [];
   const topLevelCollections = collections.filter(
     (collection) => collection.parent?.name === '__root_collection__',
   );
-  const activeCustomer = await getActiveCustomer({ request });
+  const activeCustomer = await getActiveCustomer({ request }).catch(() => ({ _headers: new Headers() } as any));
   const locale = await getI18NextServer().then((i18next) =>
     i18next.getLocale(request),
-  );
+  ).catch(() => 'ar');
   const loaderData: RootLoaderData = {
     activeCustomer,
-    activeChannel: await activeChannel({ request }),
+    activeChannel: await activeChannel({ request }).catch(() => ({} as any)),
     collections: topLevelCollections,
     locale,
   };
