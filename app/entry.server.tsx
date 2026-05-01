@@ -112,7 +112,7 @@ export default async function handleRequest(
 
   await instance
     .use(initReactI18next)
-    .use(await getPlatformBackend())
+    .use(resourcesToBackend(findLanguageJSON))
     .init({
       ...i18n,
       lng,
