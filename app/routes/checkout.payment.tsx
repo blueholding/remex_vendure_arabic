@@ -83,15 +83,25 @@ export async function action({ params, request }: DataFunctionArgs) {
   const body = await request.formData();
   const paymentMethodCode = body.get('paymentMethodCode');
   const paymentNonce = body.get('paymentNonce');
+  
   if (typeof paymentMethodCode === 'string') {
-    const { nextOrderStates } = await getNextOrderStates({
-      request,
-    });
+    const { nextOrderStates, _headers: h1 } = await getNextOrderStates({ request });
+    
+    const responseHeaders = new Headers();
+    // اجمع الـ Set-Cookie من كل response
+    const collectHeaders = (h: Headers) => {
+      const cookie = h.get('Set-Cookie');
+      if (cookie) responseHeaders.set('Set-Cookie', cookie);
+    };
+    collectHeaders(h1);
+
     if (nextOrderStates.includes('ArrangingPayment')) {
       const transitionResult = await transitionOrderToState(
         'ArrangingPayment',
         { request },
       );
+      collectHeaders(transitionResult._headers);
+      
       if (transitionResult.transitionOrderToState?.__typename !== 'Order') {
         throw new Response('Not Found', {
           status: 400,
@@ -104,9 +114,12 @@ export async function action({ params, request }: DataFunctionArgs) {
       { method: paymentMethodCode, metadata: { nonce: paymentNonce } },
       { request },
     );
+    collectHeaders(result._headers);
+
     if (result.addPaymentToOrder.__typename === 'Order') {
       return redirect(
         `/checkout/confirmation/${result.addPaymentToOrder.code}`,
+        { headers: responseHeaders },  // ← ابعت الـ cookies مع الـ redirect
       );
     } else {
       throw new Response('Not Found', {
@@ -116,7 +129,6 @@ export async function action({ params, request }: DataFunctionArgs) {
     }
   }
 }
-
 export default function CheckoutPayment() {
   const {
     eligiblePaymentMethods,
