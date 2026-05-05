@@ -19,37 +19,81 @@ import { getActiveCustomerAddresses } from '~/providers/customer/customer';
 import { AddressForm } from '~/components/account/AddressForm';
 import { ShippingMethodSelector } from '~/components/checkout/ShippingMethodSelector';
 import { ShippingAddressSelector } from '~/components/checkout/ShippingAddressSelector';
-import { getActiveOrder } from '~/providers/orders/order';
+import { sdk } from '~/graphqlWrapper';
 import { useTranslation } from 'react-i18next';
 
 export async function loader({ request }: DataFunctionArgs) {
-  const session = await getSessionStorage().then((sessionStorage) =>
-    sessionStorage.getSession(request?.headers.get('Cookie')),
+  const sessionStorage = await getSessionStorage();
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie'),
   );
 
-  const activeOrder = await getActiveOrder({ request });
+  // استخدم sdk مباشرة عشان نجيب الـ _headers
+  const { activeOrder, _headers: orderHeaders } = await sdk.activeOrder(
+    undefined,
+    { request },
+  );
 
-  //check if there is an active order if not redirect to homepage
+  // اجمع الـ Set-Cookie من كل response
+  const responseHeaders = new Headers();
+  const collectCookie = (h: Headers) => {
+    const cookie = h.get('Set-Cookie');
+    if (cookie) responseHeaders.set('Set-Cookie', cookie);
+  };
+  collectCookie(orderHeaders);
+
+  // لو مفيش order نشط ارجع للرئيسية
   if (
     !session ||
     !activeOrder ||
     !activeOrder.active ||
     activeOrder.lines.length === 0
   ) {
-    return redirect('/');
+    return redirect('/', { headers: responseHeaders });
   }
-  const { availableCountries } = await getAvailableCountries({ request });
-  const { eligibleShippingMethods } = await getEligibleShippingMethods({
-    request,
-  });
-  const { activeCustomer } = await getActiveCustomerAddresses({ request });
+
+  const { availableCountries, _headers: countriesHeaders } =
+    await getAvailableCountriesWithHeaders({ request });
+  collectCookie(countriesHeaders);
+
+  const { eligibleShippingMethods, _headers: shippingHeaders } =
+    await getEligibleShippingMethodsWithHeaders({ request });
+  collectCookie(shippingHeaders);
+
+  const { activeCustomer, _headers: customerHeaders } =
+    await getActiveCustomerAddresses({ request });
+  collectCookie(customerHeaders);
+
   const error = session.get('activeOrderError');
-  return json({
-    availableCountries,
-    eligibleShippingMethods,
-    activeCustomer,
-    error,
-  });
+
+  return json(
+    {
+      availableCountries,
+      eligibleShippingMethods,
+      activeCustomer,
+      error,
+    },
+    { headers: responseHeaders }, // ← مهم: ابعت الـ cookies للـ browser
+  );
+}
+
+// Helper functions عشان نجيب الـ _headers من كل provider
+async function getAvailableCountriesWithHeaders(options: { request: Request }) {
+  const result = await sdk.availableCountries({}, options);
+  return {
+    availableCountries: result.availableCountries,
+    _headers: result._headers,
+  };
+}
+
+async function getEligibleShippingMethodsWithHeaders(options: {
+  request: Request;
+}) {
+  const result = await sdk.eligibleShippingMethods({}, options);
+  return {
+    eligibleShippingMethods: result.eligibleShippingMethods,
+    _headers: result._headers,
+  };
 }
 
 export default function CheckoutShipping() {
@@ -95,6 +139,7 @@ export default function CheckoutShipping() {
       setCustomerFormChanged(false);
     }
   };
+
   const submitAddressForm = (event: FormEvent<HTMLFormElement>) => {
     const formData = new FormData(event.currentTarget);
     const isValid = event.currentTarget.checkValidity();
@@ -102,6 +147,7 @@ export default function CheckoutShipping() {
       setShippingAddress(formData);
     }
   };
+
   const submitSelectedAddress = (index: number) => {
     const selectedAddress = activeCustomer?.addresses?.[index];
     if (selectedAddress) {
@@ -210,7 +256,6 @@ export default function CheckoutShipping() {
                   />
                 </div>
               </div>
-
               <div>
                 <label
                   htmlFor="lastName"
