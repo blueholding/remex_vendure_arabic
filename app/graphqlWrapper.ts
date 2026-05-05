@@ -41,6 +41,7 @@ async function sendQuery<Response, Variables = {}>(options: {
     method: 'POST',
     body: JSON.stringify(options),
     headers,
+    credentials: 'include',  // ← أضف السطر ده
   }).then(async (res) => ({
     ...(await res.json()),
     headers: res.headers,
